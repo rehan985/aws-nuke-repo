@@ -35,10 +35,10 @@ jobs:
           # Add your own account IDs
           - '999999999999'
         accounts:
-          000000000000:
+          992382734664:
             filters:
               IAMUser:
-                - 'your-user-name'
+                - 'Qasim_Admin'
         regions:
           - global
           - us-east-1
@@ -47,4 +47,4 @@ jobs:
     - name: Run aws-nuke
       run: |
         aws-nuke -c aws-nuke-config.yml 
-        aws-nuke -c aws-nuke-config.yml --no-dry-run
+        
