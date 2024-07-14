@@ -1,0 +1,18 @@
+name: AWS Nuke Caller
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  call-aws-nuke:
+    uses: ./.github/workflows/aws-nuke-reusable.yml
+    with:
+      aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      aws-region: 'us-east-1'
+      aws-account-id: '992382734664'
+      account-alias: 'weboide'  # Replace with your actual alias
+      iam-user-filter: 'Qasim_Admin'
