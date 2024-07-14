@@ -1,0 +1,72 @@
+name: AWS Nuke Reusable Workflow
+
+on:
+  workflow_call:
+    inputs:
+      aws-access-key-id:
+        description: 'AWS Access Key ID'
+        required: true
+        type: string
+      aws-secret-access-key:
+        description: 'AWS Secret Access Key'
+        required: true
+        type: string
+      aws-region:
+        description: 'AWS Region'
+        required: true
+        type: string
+      aws-account-id:
+        description: 'AWS Account ID to nuke'
+        required: true
+        type: string
+      account-alias:
+        description: 'AWS Account Alias'
+        required: true
+        type: string
+      iam-user-filter:
+        description: 'IAM User Filter'
+        required: true
+        type: string
+
+jobs:
+  aws-nuke:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v2
+
+    - name: Set up AWS CLI
+      uses: aws-actions/configure-aws-credentials@v1
+      with:
+        aws-access-key-id: ${{ inputs.aws-access-key-id }}
+        aws-secret-access-key: ${{ inputs.aws-secret-access-key }}
+        aws-region: ${{ inputs.aws-region }}
+
+    - name: Install aws-nuke
+      run: |
+        wget https://github.com/rebuy-de/aws-nuke/releases/download/v2.25.0/aws-nuke-v2.25.0-linux-amd64.tar.gz
+        tar -xvf aws-nuke-v2.25.0-linux-amd64.tar.gz
+        chmod u+x aws-nuke-v2.25.0-linux-amd64
+        sudo mv aws-nuke-v2.25.0-linux-amd64 /usr/local/bin/aws-nuke
+
+    - name: Configure aws-nuke
+      run: |
+        echo "
+        account-blocklist:
+          - '999999999999'
+        accounts:
+          ${ inputs.aws-account-id }:
+            filters:
+              IAMUser:
+                - '${ inputs.iam-user-filter }'
+        regions:
+          - global
+          - ${ inputs.aws-region }
+        " > aws-nuke-config.yml
+
+    - name: Run aws-nuke
+      env:
+        AWS_NUKE_ALIAS: ${{ inputs.account-alias }}
+      run: |
+        echo $AWS_NUKE_ALIAS | aws-nuke -c aws-nuke-config.yml --no-dry-run --force
