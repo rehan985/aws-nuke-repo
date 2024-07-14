@@ -46,5 +46,5 @@ jobs:
 
     - name: Run aws-nuke
       run: |
-        aws-nuke -c aws-nuke-config.yml 
+        aws-nuke -c aws-nuke-config.yml --force
         
