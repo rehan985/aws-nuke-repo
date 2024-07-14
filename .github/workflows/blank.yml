@@ -1,0 +1,50 @@
+name: AWS Nuke
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  aws-nuke:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v2
+
+    - name: Set up AWS CLI
+      uses: aws-actions/configure-aws-credentials@v1
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: us-east-1
+
+    - name: Install aws-nuke
+      run: |
+        wget https://github.com/rebuy-de/aws-nuke/releases/download/v2.25.0/aws-nuke-v2.25.0-linux-amd64.tar.gz
+        tar -xvf aws-nuke-v2.25.0-linux-amd64.tar.gz
+        chmod u+x aws-nuke-v2.25.0-linux-amd64
+        sudo mv aws-nuke-v2.25.0-linux-amd64 /usr/local/bin/aws-nuke
+
+    - name: Configure aws-nuke
+      run: |
+        echo "
+        account-blocklist:
+          # Add your own account IDs
+          - '999999999999'
+        accounts:
+          000000000000:
+            filters:
+              IAMUser:
+                - 'your-user-name'
+        regions:
+          - global
+          - us-east-1
+        " > aws-nuke-config.yml
+
+    - name: Run aws-nuke
+      run: |
+        aws-nuke -c aws-nuke-config.yml 
+        aws-nuke -c aws-nuke-config.yml --no-dry-run
