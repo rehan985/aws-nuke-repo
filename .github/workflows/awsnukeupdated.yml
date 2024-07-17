@@ -1,0 +1,52 @@
+name: AWS Nuke Account
+
+on:
+  push:
+  workflow_dispatch:
+    inputs:
+      environment:
+        type: environment
+        description: 'AWS Account env to nuke'
+        required: true
+
+jobs:
+  aws-nuke:
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.environment }}
+
+    steps:    
+    - name: Checkout repository
+      uses: actions/checkout@v3
+
+    - name: Configure AWS Credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        role-to-assume: arn:aws:iam::${{ vars.AWS_ACCOUNT_ID }}:role/terraform-role
+        role-session-name: aws-nuke-job
+        aws-region: eu-west-1
+
+    - name: Install aws-nuke
+      run: |
+        wget https://github.com/rebuy-de/aws-nuke/releases/download/v2.25.0/aws-nuke-v2.25.0-linux-amd64.tar.gz
+        tar -xvf aws-nuke-v2.25.0-linux-amd64.tar.gz
+        chmod u+x aws-nuke-v2.25.0-linux-amd64
+        sudo mv aws-nuke-v2.25.0-linux-amd64 /usr/local/bin/aws-nuke
+
+    - name: Configure aws-nuke
+      run: |
+        echo " 
+        accounts:
+          - ${{ vars.AWS_ACCOUNT_ID }}
+
+        resource-types:
+          excludes:
+            - IAMUser
+        
+        regions:
+          - global
+          - eu-west-1
+        " > aws-nuke-config.yml
+
+    - name: Run aws-nuke
+      run: |
+        aws-nuke -c aws-nuke-config.yml --force --no-dry-run
